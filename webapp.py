@@ -102,10 +102,28 @@ def detect_face_flask(url):
     res=face_detector(url)
     return jsonify(res)
 
-@app.route('/predict_breed/<string:url>', methods=['GET'])
+@app.route('/predict_breed/<path:url>', methods=['GET'])
 def detect_breed_flask(url):
     res=predict_breed(url)
     return jsonify(res)
 
-
+import requests
+@app.route('/predict_url_img/<path:url>', methods=['POST'])
+def download_image_flask(url):
+    res = {}
+    file_name = '/tmp/test.jpg'
+    try:
+        r = requests.get(url, stream=True)
+        with open(file_name, 'wb') as f:
+            f.write(r.content)
+            f.close()
+        is_dog = dog_detector(file_name)
+        is_human = face_detector(file_name)
+        res['is_dog'] = str(is_dog)
+        res['is_human'] = str(is_human)
+        if is_dog or is_human:
+            res['dog_breed'] = predict_breed(file_name)
+    except Exception as e:
+        return str(e)
+    return jsonify(res)
 app.run(debug=False)
